@@ -1,4 +1,4 @@
-(ns cloudberry.ui.data)
+(ns cloudberry.front.ui.data)
 
 (defn get-from-state [state fields]
   (map #(get-in state [(keyword :fields %) :value]) fields))

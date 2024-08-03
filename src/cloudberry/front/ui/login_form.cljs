@@ -1,4 +1,4 @@
-(ns cloudberry.ui.login-form
+(ns cloudberry.front.ui.login-form
   (:require [dumdom.core :as d]))
 
 (d/defcomponent Input [{:keys [class type message error? value placeholder input-actions blur-actions]}]

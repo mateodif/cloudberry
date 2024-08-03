@@ -1,8 +1,7 @@
-(ns cloudberry.core
+(ns cloudberry.front.core
   (:require [clojure.walk :as walk]
-            [cloudberry.mail :as mail]
-            [cloudberry.ui.login-form :refer [LoginForm]]
-            [cloudberry.ui.data :as ui]
+            [cloudberry.front.ui.login-form :refer [LoginForm]]
+            [cloudberry.front.ui.data :as ui]
             [dumdom.core :as d])
   (:gen-class))
 
@@ -10,7 +9,7 @@
   (doseq [[action & args] actions]
     (println "Execute %s %s" action args)
     (case action
-      :action/login (swap! store assoc :mail-store (mail/setup! args)))))
+      :action/login (swap! store assoc :mail-store nil))))
 
 (defn get-target-value [event el]
   (if (= :event/target.value el)
