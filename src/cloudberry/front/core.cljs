@@ -2,8 +2,7 @@
   (:require [clojure.walk :as walk]
             [cloudberry.front.ui.login-form :refer [LoginForm]]
             [cloudberry.front.ui.data :as ui]
-            [dumdom.core :as d])
-  (:gen-class))
+            [dumdom.core :as d]))
 
 (defn execute-actions [store actions]
   (doseq [[action & args] actions]
@@ -32,3 +31,9 @@
     (fn [_ _ _ state]
       (render element state)))
   (render @store element))
+
+(defonce store (atom {}))
+(defonce element (js/document.getElementById "app"))
+
+(defn init! []
+  (start store element))
