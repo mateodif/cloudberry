@@ -1,11 +1,8 @@
 {:paths ["src" "resources"]
  :deps { ;; clj
         org.clojure/clojure {:mvn/version "1.11.3"}
-       
-        ;; using older ring because it conflicts with figwheel
-        ;; todo: change figwheel to shadow-cljs
-        ring/ring-core {:mvn/version "1.10.0"}
-        ring/ring-jetty-adapter {:mvn/version "1.10.0"}
+        ring/ring-core {:mvn/version "1.12.2"}
+        ring/ring-jetty-adapter {:mvn/version "1.12.2"}
         metosin/reitit-ring {:mvn/version "0.7.1"}
         metosin/reitit-middleware {:mvn/version "0.7.1"}
         integrant/integrant {:mvn/version "0.10.0"}
