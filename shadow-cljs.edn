@@ -1,6 +1,7 @@
 ;; shadow-cljs configuration
 {:source-paths ["src" "dev"]
- :dependencies [[cjohansen/dumdom "2024.04.02"]]
+ :dependencies [[cjohansen/dumdom "2024.04.02"]
+                [cljs-http "0.1.48"]]
  :builds {:app {:target :browser
                 :output-dir "resources/public/js"
                 :modules {:main {:init-fn cloudberry.front.core/init!}}}}

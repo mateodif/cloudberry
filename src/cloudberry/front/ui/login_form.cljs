@@ -27,3 +27,8 @@
    (Input user-field)
    (Input (assoc pass-field :type "password"))
    (Button button)])
+
+(d/defcomponent AuthWrapper [{:keys [authenticated? login-component main-component]}]
+  (if authenticated?
+    main-component
+    login-component))

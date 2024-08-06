@@ -3,6 +3,7 @@
             [reitit.ring :as ring]
             [reitit.ring.middleware.parameters :as parameters]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
+            [ring.middleware.json :refer [wrap-json-response]]
             [ring.util.response :as rr]
             [muuntaja.core :as m]
             [reitit.ring.middleware.muuntaja :as muuntaja]))
@@ -38,14 +39,16 @@
       ["/:id/flag/:flag" {:delete {:parameters {:path {:id string?
                                                        :flag string?}}}
                           :handler #'mail/remove-flag}]]
-     ["/login" {:post {:parameters {:body {:user string? :password string?}}
-                       :handler #'mail/login!}}]]
+     ["/login" {:post {:parameters {:body {:host string? :user string? :password string?}}
+                       :handler #'mail/login!}}]
+     ["/health" {:get {:handler (constantly {:status 200 :body "OK"})}}]]
     {:data {:session session
             :muuntaja m/instance
             :middleware [muuntaja/format-middleware
                          session-middleware
                          parameters/parameters-middleware
-                         wrap-keyword-params]}})
+                         wrap-keyword-params
+                         wrap-json-response]}})
    (ring/routes
     (ring/create-resource-handler {:path "/"})
     (ring/create-default-handler

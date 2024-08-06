@@ -1,5 +1,4 @@
 (ns cloudberry.back.mail
-  "FIXME: implement all"
   (:require [ring.util.response :as rr])
   (:import [jakarta.mail Folder]))
 
@@ -39,13 +38,19 @@
          (mapv #(.getSubject %))
          rr/response)))
 
-(defn login! [{:keys [body-params session] :as req}]
+(defn login! [{:keys [body-params session]}]
+  (println body-params)
   (let [{:keys [host user password]} body-params
         store session]
-    (if (.isConnected store)
-      store
-      (.connect store host user password))
-    (default req)))
+    (try
+      (.connect store host user password)
+      (rr/response (str true))
+      (catch Exception _
+        (rr/response (str false))))))
 
 (defn authenticated? [{:keys [session]}]
-  (.isConnected session))
+  (try
+    (let [connected? (.isConnected session)]
+      (rr/response (str connected?)))
+    (catch Exception _
+      (rr/response (str false)))))

@@ -23,6 +23,9 @@
 (defmethod ig/init-key :handler/run-app [_ {:keys [session]}]
   (handler/api session))
 
+(defmethod ig/halt-key! :handler/run-app [_ _]
+  nil)
+
 ;; imap session
 (defmethod ig/init-key :mail/session [_ _]
   (let [props (doto (Properties.)
