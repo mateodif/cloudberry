@@ -6,15 +6,24 @@
             [cloudberry.front.ui.login-form :refer [AuthWrapper]]
             [cloudberry.front.ui.data :as ui]
             [dumdom.core :as d]))
+(declare execute-actions)
 
 (defonce host "http://localhost:3000")
 
+(defn get-auth-credentials [store path]
+  (zipmap [:host :user :password] (map #(get-in store [% :value]) path)))
 
 (defn login! [store path]
-  (swap! store assoc :authenticated?
-         (go (let [credentials (zipmap [:host :user :password] (map #(get-in @store [% :value]) path))
-                   response (<! (http/post (str host "/login") {:edn-params credentials}))]
-               (parse-boolean (:body response))))))
+  (go (let [params {:edn-params (get-auth-credentials @store path)}
+            res (<! (http/post (str host "/login") params))
+            auth? (-> res :body parse-boolean)]
+        (js/setTimeout (swap! store assoc :authenticated? auth?) 0)
+        (when auth?
+          (execute-actions store [[:action/fetch-mails]])))))
+
+(defn fetch-mails! [store]
+  (go (let [response (<! (http/get (str host "/mail")))]
+        (js/setTimeout (swap! store assoc :inbox (:body response)) 0))))
 
 (defn execute-actions [store actions]
   (doseq [[action path data] actions]
@@ -22,6 +31,7 @@
     (case action
       :action/save (swap! store assoc-in path data)
       :action/login (login! store path)
+      :action/fetch-mails (fetch-mails! store)
       nil)))
 
 (defn get-actions [e actions]
