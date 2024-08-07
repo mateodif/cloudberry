@@ -1,6 +1,6 @@
 (ns cloudberry.back.mail
   (:require [ring.util.response :as rr])
-  (:import [jakarta.mail Folder]))
+  (:import [jakarta.mail Folder FetchProfile FetchProfile$Item]))
 
 (defn default [req & _]
   (rr/response "Success."))
@@ -19,24 +19,26 @@
 
 (def remove-flag default)
 
-(defn get-last-n-messages [folder n]
-  (let [message-count (.getMessageCount folder)
-        start (max 1 (- message-count (dec n)))]
-    (.getMessages folder start message-count)))
+(defn get-last-n-messages [folder limit]
+  (let [end (.getMessageCount folder)
+        start (max 1 (- end limit -1))]
+    (.getMessages folder start end)))
 
 (defn message->map [message]
   {:subject (.getSubject message)
    :from (-> message .getFrom first .toString)
-   :sent-date (.getSentDate message)
-   :content (.toString (.getContent message))})
+   :sent-date (.getSentDate message)})
 
 (defn get-all [{:keys [session]}]
-  (println session)
   (with-open [inbox (doto (.getFolder session "INBOX")
                       (.open Folder/READ_ONLY))]
-    (->> (get-last-n-messages inbox 1)
-         (mapv #(.getSubject %))
-         rr/response)))
+    (let [messages (get-last-n-messages inbox 20)
+          fp (doto (FetchProfile.)
+               (.add FetchProfile$Item/ENVELOPE))]
+      (.fetch inbox messages fp)
+      (->> messages
+           (mapv message->map)
+           rr/response))))
 
 (defn login! [{:keys [body-params session]}]
   (println body-params)
