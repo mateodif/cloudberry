@@ -4,5 +4,6 @@
                 [cljs-http "0.1.48"]]
  :builds {:app {:target :browser
                 :output-dir "resources/public/js"
+                :devtools {:reload-strategy :full}
                 :modules {:main {:init-fn cloudberry.front.core/init!}}}}
  :dev-http {4000 "resources/public"}}

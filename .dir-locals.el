@@ -1,4 +1,6 @@
-((nil
-  (cider-clojure-cli-aliases . "-A:dev")
-  (cider-default-cljs-repl . shadow)
-  (cider-preferred-build-tool . clojure-cli)
+((nil . ((cider-clojure-cli-aliases . "-A:dev")
+         (cider-preferred-build-tool . shadow-cljs)
+         (cider-default-cljs-repl . shadow)
+         (cider-shadow-default-options . ":app")
+         (cider-shadow-watched-builds . (":app"))
+         (cider-offer-to-open-cljs-app-in-browser . nil))))

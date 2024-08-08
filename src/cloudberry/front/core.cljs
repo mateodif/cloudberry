@@ -63,5 +63,5 @@
 (defonce store (atom {}))
 (defonce element (js/document.getElementById "app"))
 
-(defn init! []
+(defn ^:dev/after-load init! []
   (start store element))

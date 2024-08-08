@@ -37,11 +37,8 @@
   (when (.isConnected store)
     (.close store)))
 
-(defn -main []
+(defn start! []
   (ig/init config))
 
-(comment
-  (ig/init config)
-  (ig/halt! config)
-
-  )
+(defn stop! []
+  (ig/halt! config))
