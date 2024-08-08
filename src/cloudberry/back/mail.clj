@@ -25,7 +25,8 @@
     (.getMessages folder start end)))
 
 (defn message->map [message]
-  {:subject (.getSubject message)
+  {:id (.getMessageID message)
+   :subject (.getSubject message)
    :from (-> message .getFrom first .toString)
    :sent-date (.getSentDate message)})
 
@@ -47,6 +48,9 @@
     (try
       (.connect store host user password)
       (rr/response (str true))
+      (catch IllegalStateException _
+        ;; Already connected
+        (rr/response (str true)))
       (catch Exception _
         (rr/response (str false))))))
 
