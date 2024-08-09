@@ -1,67 +1,71 @@
 (ns cloudberry.front.core
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [clojure.walk :as walk]
+  (:require [cloudberry.front.ui.login-form :refer [AuthWrapper]]
+            [cloudberry.front.ui.data :as ui]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<!]]
-            [cloudberry.front.ui.login-form :refer [AuthWrapper]]
-            [cloudberry.front.ui.data :as ui]
+            [clojure.string :as str]
             [dumdom.core :as d]))
-(declare execute-actions)
-
-(defonce host "http://localhost:3000")
-
-(defn get-auth-credentials [store path]
-  (zipmap [:host :user :password] (map #(get-in store [% :value]) path)))
-
-(defn login! [store path]
-  (go (let [params {:edn-params (get-auth-credentials @store path)}
-            res (<! (http/post (str host "/login") params))
-            auth? (-> res :body parse-boolean)]
-        (js/setTimeout (swap! store assoc :authenticated? auth?) 0)
-        (when auth?
-          (execute-actions store [[:action/fetch-mails]])))))
-
-(defn fetch-mails! [store]
-  (go (let [response (<! (http/get (str host "/mail")))]
-        (js/setTimeout (swap! store assoc :inbox (:body response)) 0))))
-
-(defn execute-actions [store actions]
-  (doseq [[action path data] actions]
-    (println action path data)
-    (case action
-      :action/save (swap! store assoc-in path data)
-      :action/login (login! store path)
-      :action/fetch-mails (fetch-mails! store)
-      nil)))
-
-(defn get-actions [e actions]
-  (walk/postwalk
-   (fn [x]
-     (if (= :event/target.value x)
-       (some-> e .-target .-value)
-       x))
-   actions))
-
-(defn register-actions [store]
-  (d/set-event-handler!
-   (fn [e actions]
-     (->> actions
-          (get-actions e)
-          (execute-actions store)))))
-
-(defn render [state element]
-  (d/render (AuthWrapper (ui/prepare-auth-wrapper state)) element))
-
-(defn start [store element]
-  (register-actions store)
-  (add-watch store ::app
-    (fn [_ _ _ state]
-      (println state)
-      (render state element)))
-  (render @store element))
 
 (defonce store (atom {}))
-(defonce element (js/document.getElementById "app"))
+(def ^:constant api-base-url "http://localhost:3000")
+
+(defn api-url [path]
+  (str/join "/" [api-base-url (str/replace path #"^/" "")]))
+
+(defn handle-action [action {:keys [field] :as payload} state]
+  (case action
+    :action/set-field (assoc state field (get-in payload [:event :value]))
+    :api/make-request (assoc state :loading true :error nil)
+    :api/success (-> state
+                     (assoc :loading false :error nil)
+                     (merge payload))
+    :api/failure (assoc state :loading false :error (:error payload))
+    :test (prn action payload state)
+    state))
+
+(defn handle-api-call! [{:keys [method route params]}]
+  (let [req-url (api-url route)
+        config {:with-credentials? false}]
+    (prn method req-url params)
+    (case method
+      :get (http/get req-url (merge config {:query-params params}))
+      :post (http/post req-url (merge config {:json-params params})))))
+
+(defn process-api-response! [response]
+  (let [res (js->clj response :keywordize-keys true)
+        status (if (= (:status res) 200) :api/success :api/failure)]
+    (swap! store #(handle-action status (:body res) %))))
+
+(defn perform-api-call! [payload]
+  (go
+    (let [res (<! (handle-api-call! payload))]
+      (js/setTimeout (process-api-response! res) 0))))
+
+(defn prepare-api-payload [{:keys [fields] :as payload} store]
+  (update payload :params #(merge % (update-keys (select-keys store fields) (comp keyword name)))))
+
+(d/set-event-handler!
+ (fn [event actions]
+   (doseq [[action data] actions]
+     (let [event-val (some-> event .-target .-value)
+           event-key (some-> event .-keyCode)
+           payload (cond-> (or data {})
+                     event-val (assoc-in [:event :value] event-val)
+                     event-key (assoc-in [:event :key-code] event-key))]
+       (prn "Triggered action" action payload)
+       (swap! store #(handle-action action payload %))
+       (when (= (-> action namespace keyword) :api)
+         (perform-api-call! (prepare-api-payload payload @store)))))))
+
+(defn render! []
+  (d/render
+   (AuthWrapper (ui/prepare-auth-wrapper @store))
+   (js/document.getElementById "app")))
+
+(add-watch store ::app (fn [_ _ _ _]
+                         (prn @store)
+                         (render!)))
 
 (defn ^:dev/after-load init! []
-  (start store element))
+  (render!))

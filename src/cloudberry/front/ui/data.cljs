@@ -1,34 +1,33 @@
 (ns cloudberry.front.ui.data
   (:require [cloudberry.front.ui.login-form :refer [LoginForm]]
-            [cloudberry.front.ui.mail :refer [MailViewer]]))
+            [cloudberry.front.ui.mail :refer [MailViewer]]
+            [clojure.string :as str]))
 
-(defn get-from-state [state fields]
-  (map #(get-in state [(keyword :fields %) :value]) fields))
-
-(defn prepare-input [state k]
-  (let [{:keys [value]} (k state)]
-    {:placeholder (str k)
+(defn prepare-input [state field]
+  (let [{:keys [value]} (field state)]
+    {:placeholder (name field)
      :value (or value "")
-     :input-actions
-     (->> [[:action/save [k :value] :event/target.value]]
-          (remove nil?))}))
+     :input-actions [[:action/set-field {:field field}]]}))
 
-(defn prepare-button [state]
-  (let [[server user pass] (get-from-state state [:server :user :pass])
-        ready? (and server user pass)]
+(defn prepare-login-button [state]
+  (let [form-fields [:form/host :form/user :form/password]
+        form (select-keys state form-fields)
+        ready? (not-every? str/blank? form)]
     {:text "Login"
      :enabled? ready?
      :actions (when ready?
-                [[:action/login [:fields/server :fields/user :fields/pass] nil]])}))
+                [[:api/make-request {:method :post
+                                     :route "/login"
+                                     :fields form-fields}]])}))
 
 (defn prepare-login [state]
-  {:server-field (prepare-input state :fields/server)
-   :user-field (prepare-input state :fields/user)
-   :pass-field (prepare-input state :fields/pass)
-   :button (prepare-button state)})
+  {:server-field (prepare-input state :form/host)
+   :user-field (prepare-input state :form/user)
+   :pass-field (prepare-input state :form/password)
+   :button (prepare-login-button state)})
 
 (defn prepare-mails [state]
-  {:inbox (get-in state [:inbox])})
+  (select-keys state [:inbox]))
 
 (defn prepare-auth-wrapper [state]
   {:authenticated? (:authenticated? state)

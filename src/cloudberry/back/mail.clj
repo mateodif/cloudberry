@@ -39,20 +39,20 @@
       (.fetch inbox messages fp)
       (->> messages
            (mapv message->map)
+           (assoc {} :inbox)
            rr/response))))
 
 (defn login! [{:keys [body-params session]}]
-  (println body-params)
   (let [{:keys [host user password]} body-params
         store session]
     (try
       (.connect store host user password)
-      (rr/response (str true))
+      (rr/response {:authenticated? true})
       (catch IllegalStateException _
         ;; Already connected
-        (rr/response (str true)))
+        (rr/response {:authenticated? true}))
       (catch Exception _
-        (rr/response (str false))))))
+        (rr/response {:authenticated? false})))))
 
 (defn authenticated? [{:keys [session]}]
   (try

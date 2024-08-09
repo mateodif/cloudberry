@@ -1,8 +1,8 @@
 (ns cloudberry.front.ui.mail
-  (:require [dumdom.core :refer [defcomponent]]))
+  (:require [dumdom.core :refer [defcomponent] :as d]))
 
 (defcomponent Sidebar []
-  [:div {:class [:column :is-1]}
+  [:div {:class [:column :is-2]}
    [:aside {:class [:menu :p-4]}
     [:button {:class [:button :is-small]}
      "New message"]
@@ -12,7 +12,10 @@
      [:li [:a "Sent"]]
      [:li [:a "Spam"]]]]])
 
-(defcomponent MailViewer [{:keys [inbox]}]
+(defcomponent MailViewer
+  :on-mount (fn [e] (d/dispatch-event-data e [[:api/make-request {:method :get
+                                                                  :route "/mail"}]]))
+  [{:keys [inbox]}]
   [:div {:class [:columns :is-gapless] :style {:height "100vh"}}
    (Sidebar)
    [:div {:class :column}
