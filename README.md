@@ -6,17 +6,6 @@ Attempts to follow the data-flow described in this Christian Johansen's article 
 
 ## Explanation of render cycle
 
-Basically, it goes like this:
-1. `render!` is called with empty global state and an initial component
-2. A global event handler is defined, which listens for any events (like a text input)
-3. The handler iterates the events along corresponding data (like the action)
-4. `handle-action` returns a new state depending on the action and
-payload
-5. (optional) If the action begins with `:api`, it'll be treated differently by making the API call and getting new data which will be merged into the new state
-6. The global state is replaced by the new state
-7. Re-render happens and all components load
-
-
 1. `render!` is called with empty global state and an initial component, creating the initial UI.
 2. A global event handler is defined to listen for UI events (e.g., clicks, input changes).
 3. When a user interacts with the UI, it triggers an event captured by the global handler.
