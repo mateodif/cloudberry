@@ -15,14 +15,14 @@
       (handler req)
       (rr/not-found req))))
 
-(def session-middleware
-  {:name ::session
-   :compile (fn [{:keys [session]} _]
+(def store-middleware
+  {:name ::store
+   :compile (fn [{:keys [store]} _]
               (fn [handler]
                 (fn [req]
-                  (handler (assoc req :session session)))))})
+                  (handler (assoc req :store store)))))})
 
-(defn api [session]
+(defn api [store]
   (ring/ring-handler
    (ring/router
     [["/mail"
@@ -42,10 +42,10 @@
      ["/login" {:post {:parameters {:body {:host string? :user string? :password string?}}
                        :handler #'mail/login!}}]
      ["/health" {:get {:handler (constantly {:status 200 :body "OK"})}}]]
-    {:data {:session session
+    {:data {:store store
             :muuntaja m/instance
             :middleware [muuntaja/format-middleware
-                         session-middleware
+                         store-middleware
                          parameters/parameters-middleware
                          wrap-keyword-params
                          wrap-json-response]}})

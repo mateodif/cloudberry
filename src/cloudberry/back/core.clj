@@ -9,8 +9,8 @@
 
 (def config
   {:adapter/jetty {:handler (ig/ref :handler/run-app) :port 3000}
-   :handler/run-app {:session (ig/ref :mail/session)}
-   :mail/session {}})
+   :handler/run-app {:store (ig/ref :mail/store)}
+   :mail/store {}})
 
 ;; jetty
 (defmethod ig/init-key :adapter/jetty [_ {:keys [handler] :as opts}]
@@ -20,20 +20,20 @@
   (.stop server))
 
 ;; app handler
-(defmethod ig/init-key :handler/run-app [_ {:keys [session]}]
-  (handler/api session))
+(defmethod ig/init-key :handler/run-app [_ {:keys [store]}]
+  (handler/api store))
 
 (defmethod ig/halt-key! :handler/run-app [_ _]
   nil)
 
-;; imap session
-(defmethod ig/init-key :mail/session [_ _]
+;; imap store
+(defmethod ig/init-key :mail/store [_ _]
   (let [props (doto (Properties.)
                 (.put "mail.store.protocol" "imaps"))
         session (Session/getDefaultInstance props nil)]
     (.getStore session "imaps")))
 
-(defmethod ig/halt-key! :mail/session [_ store]
+(defmethod ig/halt-key! :mail/store [_ store]
   (when (.isConnected store)
     (.close store)))
 
